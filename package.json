@@ -1,0 +1,23 @@
+{
+  "name": "react-source-debugger",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite --force"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vitejs/plugin-react": "^3.1.0",
+    "vite": "^4.1.4",
+    "react": "file:./package/react",
+    "react-dom": "file:./package/react-dom",
+    "react-dom-bindings": "file:./package/react-dom-bindings",
+    "react-reconciler": "file:./package/react-reconciler",
+    "scheduler": "file:./package/scheduler",
+    "shared": "file:./package/shared"
+  }
+}
