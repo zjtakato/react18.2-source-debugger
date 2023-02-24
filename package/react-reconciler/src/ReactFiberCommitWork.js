@@ -1,5 +1,5 @@
 import { MutationMask, Placement } from './ReactFiberFlags';
-import { HostComponent, HostRoot, HostText } from './ReactWorkTags';
+import { FunctionComponent, HostComponent, HostRoot, HostText } from './ReactWorkTags';
 import { appendChild, insertBefore } from 'react-dom-bindings/src/client/ReactDOMHostConfig';
 
 /**
@@ -9,6 +9,7 @@ import { appendChild, insertBefore } from 'react-dom-bindings/src/client/ReactDO
  */
 export function commitMutationEffectsOnFiber(finishedWork, root) {
   switch (finishedWork.tag) {
+    case FunctionComponent:
     case HostRoot:
     case HostComponent:
     case HostText: {
@@ -49,7 +50,7 @@ function commitReconciliationEffects(finishedWork) {
  * @param {*} finishedWork
  */
 function commitPlacement(finishedWork) {
-  console.log('commitPlacement', finishedWork);
+  // console.log('commitPlacement', finishedWork);
   const parentFiber = getHostParentFiber(finishedWork);
   switch (parentFiber.tag) {
     case HostRoot: {
@@ -102,10 +103,10 @@ function insertOrAppendPlacementNode(node, before, parent) {
     // 如果node不是真实的DOM节点，获取它的第一个子节点
     const { child } = node;
     if (child !== null) {
-      insertOrAppendPlacementNode(node, parent); // 把node的第一个子节点添加到该node的DOM节点里面去
+      insertOrAppendPlacementNode(child, before, parent); // 把node的第一个子节点添加到该node的DOM节点里面去
       let { sibling } = child;
       while (sibling !== null) {
-        insertOrAppendPlacementNode(sibling, parent);
+        insertOrAppendPlacementNode(sibling, before, parent);
         sibling = sibling.sibling;
       }
     }
@@ -139,7 +140,8 @@ function getHostSibling(fiber) {
         node = node.child;
       }
     }
-    if(!(node.flags & Placement)) { // 如果不是插入节点
+    if (!(node.flags & Placement)) {
+      // 如果不是插入节点
       return node.stateNode;
     }
   }

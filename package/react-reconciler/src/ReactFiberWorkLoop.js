@@ -2,8 +2,9 @@ import { scheduleCallBack } from 'scheduler';
 import { createWorkInProgress } from './ReactFiber';
 import { beginWork } from './ReactFiberBeginWork';
 import { completeWork } from './ReactFiberCompleteWork';
-import { MutationMask, NoFlags } from './ReactFiberFlags';
+import { MutationMask, NoFlags, Placement, Update } from './ReactFiberFlags';
 import { commitMutationEffectsOnFiber } from './ReactFiberCommitWork';
+import { HostComponent, HostRoot, HostText } from './ReactWorkTags';
 
 let workInProgress = null; // 记录当前工作
 /**
@@ -24,7 +25,7 @@ function ensureRootIsScheduled(root) {
 function performConcurrentWorkOnRoot(root) {
   renderRootSync(root); // 以同步的方式渲染根节点，初次渲染的时候，都是同步的
   // 开始进入提交阶段，就是执行副作用，修改真实DOM
-  console.log('root', root)
+  console.log('root', root);
   const finishedWork = root.current.alternate;
   root.finishedWork = finishedWork;
   commitRoot(root);
@@ -84,6 +85,7 @@ function completeUnitOfWork(unitOfWork) {
 
 function commitRoot(root) {
   const { finishedWork } = root;
+  printFinishedWork(finishedWork);
   // 判断子树有没有副作用
   const subtreeHasEffects = (finishedWork.subtreeFlags & MutationMask) !== NoFlags;
   const rootHasEffects = (finishedWork.flags & MutationMask) !== NoFlags;
@@ -93,4 +95,42 @@ function commitRoot(root) {
   }
   // 等DOM变更后，就可以把root的current指向新的fiber树
   root.curernt = finishedWork;
+}
+
+/**
+ * 打印完成工作的副作用
+ * @param {*} finishedWork
+ */
+function printFinishedWork(fiber) {
+  let child = fiber.child;
+  while (child) {
+    printFinishedWork(child);
+    child = child.sibling;
+  }
+  if (fiber.flags !== 0) {
+    console.log(getFlags(fiber.flags), getTag(fiber.tag), fiber.type, fiber.memoizedProps);
+  }
+}
+
+function getTag(tag) {
+  switch (tag) {
+    case HostRoot:
+      return 'HostRoot';
+    case HostComponent:
+      return 'HostComponent';
+    case HostText:
+      return 'HostText';
+    default:
+      return tag;
+  }
+}
+
+function getFlags(flags) {
+  if (flags === Placement) {
+    return '插入';
+  }
+  if (false === Update) {
+    return '更新';
+  }
+  return flags;
 }

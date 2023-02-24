@@ -103,5 +103,5 @@ function createChildReconciler(shouldTracksSideEffects) {
   return reconcilerChildFibers;
 }
 
-export const mountChildFibers = createChildReconciler(false); // 有老fiber 更新的时候用这个
-export const reconcileChildFibers = createChildReconciler(true); // 没有老fiber 初次挂载用这个
+export const reconcileChildFibers = createChildReconciler(true); //  有老fiber 更新的时候用这个
+export const mountChildFibers = createChildReconciler(false); // 没有老fiber 初次挂载用这个
