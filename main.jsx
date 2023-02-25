@@ -1,9 +1,32 @@
 import { createRoot } from 'react-dom/client';
-const h1 = (
-  <h1>
-    hello <span style={{ color: 'red' }}>worl123d</span>
-  </h1>
-);
+
+function FunctionComponent() {
+  return (
+    <h1
+      onClick={(event) => {
+        console.log('ParentBubble');
+      }}
+      onClickCapture={(event) => {
+        console.log('ParentCapture');
+        event.stopPropagation();
+      }}
+    >
+      <span
+        onClick={(event) => {
+          console.log('ChildBubble');
+          event.stopPropagation();
+        }}
+        onClickCapture={(event) => {
+          console.log('ChildCapture');
+        }}
+        style={{ color: 'red' }}
+      >
+        word
+      </span>
+    </h1>
+  );
+}
+let element = <FunctionComponent />;
 const root = createRoot(document.getElementById('root'));
 console.log(root);
-root.render(h1);
+root.render(element);
