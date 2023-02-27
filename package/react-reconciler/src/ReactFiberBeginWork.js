@@ -19,6 +19,11 @@ export function beginWork(current, workInProgress) {
       return updateHostRoot(current, workInProgress);
     case HostComponent:
       return updateHostComponent(current, workInProgress);
+    case FunctionComponent: {
+      const Component = workInProgress.type;
+      const nextProps = workInProgress.pendingProps;
+      return updateFunctionComponent(current, workInProgress, Component, nextProps);
+    }
     case HostText:
       return null;
     default:
@@ -26,12 +31,12 @@ export function beginWork(current, workInProgress) {
   }
 }
 
-function updateHostRoot(curernt, workInProgress) {
+function updateHostRoot(current, workInProgress) {
   // 需要知道它的子虚拟DOM信息
   processUpdateQueue(workInProgress); // workInProgress.memoizedState = {element }
   const nextState = workInProgress.memoizedState;
   const nextChildren = nextState.element;
-  reconcileChildren(curernt, workInProgress, nextChildren); // 协调子节点 DOM-DIFF算法
+  reconcileChildren(current, workInProgress, nextChildren); // 协调子节点 DOM-DIFF算法
   return workInProgress.child;
 }
 
@@ -81,5 +86,11 @@ export function mountIndeterminateComponent(current, workInProgress, Component) 
   const value = renderWithHooks(current, workInProgress, Component, props); // 虚拟DOM
   workInProgress.tag = FunctionComponent;
   reconcileChildren(current, workInProgress, value);
+  return workInProgress.child;
+}
+
+export function updateFunctionComponent(current, workInProgress, Component, nextProps) {
+  const nextChidlren = renderWithHooks(current, workInProgress, Component, nextProps);
+  reconcileChildren(current, workInProgress, nextChidlren);
   return workInProgress.child;
 }

@@ -147,7 +147,7 @@ function createDispatchListener(instance, listener, currentTarget) {
 function executeDispatch(event, listener, currentTarget) {
   // 合成事件实例的currentTarget是在不断的变化的
   // event nativeEventTarget 它的是原始的事件源，是永远不变的
-  // event curerntTarget 当前的事件源，它是会随着事件回调的执行不断变化的
+  // event currentTarget 当前的事件源，它是会随着事件回调的执行不断变化的
   event.currentTarget = currentTarget;
   listener(event);
 }

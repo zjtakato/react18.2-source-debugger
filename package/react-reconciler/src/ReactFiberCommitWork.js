@@ -1,6 +1,6 @@
-import { MutationMask, Placement } from './ReactFiberFlags';
+import { MutationMask, Placement, Update } from './ReactFiberFlags';
 import { FunctionComponent, HostComponent, HostRoot, HostText } from './ReactWorkTags';
-import { appendChild, insertBefore } from 'react-dom-bindings/src/client/ReactDOMHostConfig';
+import { appendChild, insertBefore, commitUpdate } from 'react-dom-bindings/src/client/ReactDOMHostConfig';
 
 /**
  * 遍历fiber树，执行fiber上的副作用
@@ -8,10 +8,34 @@ import { appendChild, insertBefore } from 'react-dom-bindings/src/client/ReactDO
  * @param {*} root - 根节点
  */
 export function commitMutationEffectsOnFiber(finishedWork, root) {
+  const current = finishedWork.alternate;
+  const flags = finishedWork.flags;
   switch (finishedWork.tag) {
     case FunctionComponent:
     case HostRoot:
-    case HostComponent:
+    case HostComponent: {
+      // 先遍历子节点，处理子节点上的副作用
+      recursivelyTransverseMutationEffects(root, finishedWork);
+      // 再处理自己身上的副作用
+      commitReconciliationEffects(finishedWork);
+      // 处理DOM更新
+      if (flags & Update) {
+        // 如果副作用有更新
+        const instance = finishedWork.stateNode; // 获取真实DOM
+        // 更新真实DOM
+        if (instance !== null) {
+          const newProps = finishedWork.memoizedProps;
+          const oldProps = current !== null ? current.memoizedProps : newProps;
+          const type = finishedWork.type;
+          const updatePayload = finishedWork.updateQueue; // 得到待更新的属性
+          finishedWork.updateQueue = null;
+          if (updatePayload) {
+            commitUpdate(instance, updatePayload, type, oldProps, newProps, finishedWork);
+          }
+        }
+      }
+      break;
+    }
     case HostText: {
       // 先遍历子节点，处理子节点上的副作用
       recursivelyTransverseMutationEffects(root, finishedWork);

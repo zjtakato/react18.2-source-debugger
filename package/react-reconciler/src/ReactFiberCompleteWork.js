@@ -1,9 +1,15 @@
 import logger from 'shared/logger';
-import { HostComponent, HostRoot, HostText } from './ReactWorkTags';
-import { createTextInstance, createInstance, appendInitalChild, finalizeInitailChildren } from 'react-dom-bindings/src/client/ReactDOMHostConfig';
-import { NoFlags } from './ReactFiberFlags';
+import { HostComponent, HostRoot, HostText, FunctionComponent } from './ReactWorkTags';
+import {
+  createTextInstance,
+  createInstance,
+  appendInitalChild,
+  finalizeInitailChildren,
+  prepareUpdate,
+} from 'react-dom-bindings/src/client/ReactDOMHostConfig';
+import { NoFlags, Update } from './ReactFiberFlags';
 
-export function completeWork(curernt, workInProgress) {
+export function completeWork(current, workInProgress) {
   logger('completedWork', workInProgress);
   const newProps = workInProgress.pendingProps;
   switch (workInProgress.tag) {
@@ -18,18 +24,25 @@ export function completeWork(curernt, workInProgress) {
 
     // 如果完成的是原生节点
     case HostComponent:
-      // FIXME: 现在只是在处理创建或者挂载新节点的逻辑，后面此处回区分是初次挂载还是更新
-
       // 创建真实的DOM节点
       const { type } = workInProgress;
-      const instance = createInstance(type, newProps, workInProgress);
-      // 把自己所有的子节点都挂在自己身上
-      appendAllChild(instance, workInProgress);
-      workInProgress.stateNode = instance;
-      finalizeInitailChildren(instance, type, newProps);
+      // 如果老fier存在并且老fiber上有真实DOM节点，要走节点更新的逻辑
+      if (current !== null && workInProgress.stateNode !== null) {
+        updateHostComponent(current, workInProgress, type, newProps);
+      } else {
+        const instance = createInstance(type, newProps, workInProgress);
+        // 把自己所有的子节点都挂在自己身上
+        appendAllChild(instance, workInProgress);
+        workInProgress.stateNode = instance;
+        finalizeInitailChildren(instance, type, newProps);
+      }
+
       bubbleProperties(workInProgress);
       break;
     case HostRoot:
+      bubbleProperties(workInProgress);
+      break;
+    case FunctionComponent:
       bubbleProperties(workInProgress);
       break;
   }
@@ -72,4 +85,29 @@ function appendAllChild(parent, workInProgress) {
     }
     node = node.sibling;
   }
+}
+
+/**
+ * 在fiber的完成阶段，准备更新DOM
+ * @param {*} current - 老fiber
+ * @param {*} workInProgress - 新fiber
+ * @param {*} type - 类型
+ * @param {*} newProps - 新属性
+ */
+function updateHostComponent(current, workInProgress, type, newProps) {
+  const oldProps = current.memoizedProps; // 老的属性
+  const instance = workInProgress.stateNode; // 老的DOM节点
+  // 比较新老属性，收集属性的差异
+  const updatePayload = prepareUpdate(instance, type, oldProps, newProps);
+  console.log(updatePayload);
+  // let updatePayload = ['children', 6];
+  // 让原生组件的新fiber更新队列等于[]
+  workInProgress.updateQueue = updatePayload;
+  if (updatePayload) {
+    markUpdate(workInProgress);
+  }
+}
+
+function markUpdate(workInProgress) {
+  workInProgress.flags |= Update; // 给当前的fiber添加一个更新的副作用
 }

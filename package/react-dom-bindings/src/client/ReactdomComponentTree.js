@@ -8,7 +8,10 @@ const internalPropKey = '__reactProps$' + randomKey;
  */
 export function getCloseInstanceFromNode(targetNode) {
   const targetInstance = targetNode[internalInstanceKey];
-  return targetInstance;
+  if (targetInstance) {
+    return targetInstance;
+  }
+  return null;
 }
 
 /**

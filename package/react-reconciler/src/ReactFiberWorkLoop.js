@@ -5,8 +5,11 @@ import { completeWork } from './ReactFiberCompleteWork';
 import { MutationMask, NoFlags, Placement, Update } from './ReactFiberFlags';
 import { commitMutationEffectsOnFiber } from './ReactFiberCommitWork';
 import { HostComponent, HostRoot, HostText } from './ReactWorkTags';
+import { finishQueueConcurrentUpdates } from './ReactFiberConcurrentUpdates';
 
 let workInProgress = null; // 记录当前工作
+let workInProgressRoot = null;
+
 /**
  * 计划更新root（调度任务的功能）
  */
@@ -15,6 +18,8 @@ export function scheduleUpdateOnFiber(root) {
 }
 
 function ensureRootIsScheduled(root) {
+  if (workInProgressRoot) return;
+  workInProgressRoot = root;
   scheduleCallBack(performConcurrentWorkOnRoot.bind(null, root)); // 告诉浏览器要执行此函数
 }
 
@@ -29,6 +34,7 @@ function performConcurrentWorkOnRoot(root) {
   const finishedWork = root.current.alternate;
   root.finishedWork = finishedWork;
   commitRoot(root);
+  workInProgressRoot = null;
 }
 
 function renderRootSync(root) {
@@ -39,8 +45,9 @@ function renderRootSync(root) {
 
 function prepareFreshStack(root) {
   workInProgress = createWorkInProgress(root.current, null);
+  finishQueueConcurrentUpdates();
 }
-
+ 
 function workLoopSync() {
   while (workInProgress !== null) {
     performUnitOfWork(workInProgress);
@@ -52,8 +59,8 @@ function workLoopSync() {
  * @param {*} unitOfWork
  */
 function performUnitOfWork(unitOfWork) {
-  const curernt = unitOfWork.alternate; // 获取新fiber对应的老fiber
-  const next = beginWork(curernt, unitOfWork); // 完成当前fiber的子fiber链表构建后
+  const current = unitOfWork.alternate; // 获取新fiber对应的老fiber
+  const next = beginWork(current, unitOfWork); // 完成当前fiber的子fiber链表构建后
   unitOfWork.memoizedProps = unitOfWork.pendingProps;
   if (next === null) {
     // 如果没有子节点 表示当前的fiber已经完成了
@@ -94,7 +101,7 @@ function commitRoot(root) {
     commitMutationEffectsOnFiber(finishedWork, root); // 在fiber上提交变更操作的副作用
   }
   // 等DOM变更后，就可以把root的current指向新的fiber树
-  root.curernt = finishedWork;
+  root.current = finishedWork;
 }
 
 /**
