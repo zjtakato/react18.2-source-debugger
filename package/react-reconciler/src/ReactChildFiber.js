@@ -1,6 +1,6 @@
 import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbols';
 import { createFiberFromElement, createFiberFromText, createWorkInProgress } from './ReactFiber';
-import { Placement } from './ReactFiberFlags';
+import { ChildDeletion, Placement } from './ReactFiberFlags';
 import isArray from 'shared/isArray';
 
 /**
@@ -47,11 +47,17 @@ function createChildReconciler(shouldTracksSideEffects) {
       if (child.key === key) {
         // 判断老fiber对应的类型和新虚拟DO元素对应的类似是否一致
         if (child.type === element.type) {
-          // 如果key一样，类型也一样，则认为此节点可以复用
+          // 如果key一样，类型(标签)也一样，则认为此节点可以复用
+          deleteRemainingChildren(returnFiber, child.sibling);
           const existing = useFiber(child, element.props);
           existing.return = returnFiber;
           return existing;
+        } else {
+          // 如果找到key一样的老fiber，但是类型(标签)不一样，此时不能复用老fiber，把剩下的全部删掉
+          deleteRemainingChildren(returnFiber, child);
         }
+      } else {
+        deleteChild(returnFiber, child);
       }
       child = child.sibling;
     }
@@ -129,6 +135,28 @@ function createChildReconciler(shouldTracksSideEffects) {
     clone.index = 0;
     clone.sibling = null;
     return clone;
+  }
+
+  function deleteChild(returnFiber, childToDelete) {
+    if (!shouldTracksSideEffects) return;
+    const deletions = returnFiber.deletions;
+    if (deletions === null) {
+      returnFiber.deletions = [childToDelete];
+      returnFiber.flags |= ChildDeletion;
+    } else {
+      returnFiber.deletions.push(childToDelete);
+    }
+  }
+
+  // 删除从currentFirstChild之后的所有fiber节点
+  function deleteRemainingChildren(returnFiber, currentFirstChild) {
+    if (!shouldTracksSideEffects) return;
+    let childToDelete = currentFirstChild;
+    while (childToDelete !== null) {
+      deleteChild(returnFiber, childToDelete);
+      childToDelete = childToDelete.sibling;
+    }
+    return null;
   }
 
   return reconcilerChildFibers;

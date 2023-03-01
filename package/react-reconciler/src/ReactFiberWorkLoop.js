@@ -2,9 +2,9 @@ import { scheduleCallBack } from 'scheduler';
 import { createWorkInProgress } from './ReactFiber';
 import { beginWork } from './ReactFiberBeginWork';
 import { completeWork } from './ReactFiberCompleteWork';
-import { MutationMask, NoFlags, Placement, Update } from './ReactFiberFlags';
+import { ChildDeletion, MutationMask, NoFlags, Placement, Update } from './ReactFiberFlags';
 import { commitMutationEffectsOnFiber } from './ReactFiberCommitWork';
-import { HostComponent, HostRoot, HostText } from './ReactWorkTags';
+import { FunctionComponent, HostComponent, HostRoot, HostText } from './ReactWorkTags';
 import { finishQueueConcurrentUpdates } from './ReactFiberConcurrentUpdates';
 
 let workInProgress = null; // 记录当前工作
@@ -14,7 +14,7 @@ let workInProgressRoot = null;
  * 计划更新root（调度任务的功能）
  */
 export function scheduleUpdateOnFiber(root) {
-  console.log('~~~~~ 重新调度更新 ~~~~~')
+  console.log('~~~~~ 重新调度更新 ~~~~~');
   ensureRootIsScheduled(root); // 确保调度执行root上的更新
 }
 
@@ -48,7 +48,7 @@ function prepareFreshStack(root) {
   workInProgress = createWorkInProgress(root.current, null);
   finishQueueConcurrentUpdates();
 }
- 
+
 function workLoopSync() {
   while (workInProgress !== null) {
     performUnitOfWork(workInProgress);
@@ -110,18 +110,25 @@ function commitRoot(root) {
  * @param {*} finishedWork
  */
 function printFinishedWork(fiber) {
+  const { flags, deletions } = fiber;
+  if ((flags & ChildDeletion) !== NoFlags) {
+    fiber.flags &= ~ChildDeletion;
+    console.log('子节点有删除' + deletions.map((fiber) => `${fiber.type} #${fiber.memoizedProps.id}`).join());
+  }
   let child = fiber.child;
   while (child) {
     printFinishedWork(child);
     child = child.sibling;
   }
-  // if (fiber.flags !== 0) {
-  //   console.log(getFlags(fiber.flags), getTag(fiber.tag), fiber.type, fiber.memoizedProps);
-  // }
+  if (fiber.flags !== NoFlags) {
+    console.log(getFlags(fiber), getTag(fiber.tag), fiber.type, fiber.memoizedProps);
+  }
 }
 
 function getTag(tag) {
   switch (tag) {
+    case FunctionComponent:
+      return 'FunctionComponent';
     case HostRoot:
       return 'HostRoot';
     case HostComponent:
@@ -133,12 +140,14 @@ function getTag(tag) {
   }
 }
 
-function getFlags(flags) {
+function getFlags(fiber) {
+  const { flags, deletions } = fiber;
   if (flags === Placement) {
     return '插入';
   }
-  if (false === Update) {
+  if (flags === Update) {
     return '更新';
   }
+
   return flags;
 }

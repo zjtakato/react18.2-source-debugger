@@ -35,6 +35,7 @@ export function FiberNode(tag, pendingProps, key) {
   this.subtreeFlags = NoFlags; // 子节点对应的副作用标识（为了性能优化）
   this.alternate = null; // 替身，轮替（双缓存）
   this.index = 0; // 索引 在兄弟节点中的位置
+  this.deletions = null; // 将要删除的子fiber
 }
 
 /**

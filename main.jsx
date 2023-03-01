@@ -8,27 +8,17 @@ function counter(state, action) {
 
 function FunctionComponent() {
   console.log('~~~~FunctionComponent render~~~~~~');
-  const [count, setCount] = useReducer(counter, 0);
-  const [count1, setCount1] = useReducer(counter, 0);
   const [num1, setNum] = useState(0);
-  let attrs = { id: 'btn' };
-  if (count === 6) {
-    delete attrs.id;
-    attrs.style = { color: 'red' };
-  }
-  return (
-    <button
-      {...attrs}
-      onClick={() => {
-        // setCount({ type: 'add', payload: 1 }); // update1
-        // setCount({ type: 'add', payload: 2 }); // update2
-        // setCount({ type: 'add', payload: 3 }); // update3
-        // update1 -> update2 -> update3 -> update1
-        setNum(num1 + 1);
-      }}
-    >
-      {num1}
-    </button>
+  return num1 === 0 ? (
+    <ul key='container' onClick={() => setNum(num1 + 1)}>
+      <li key='A' id='A'>A</li>
+      <li key='B' id='B'>B</li>
+      <li key='C' id='C'>C</li>
+    </ul>
+  ) : (
+    <ul key='container' onClick={() => setNum(num1 + 1)}>
+      <li key='B' id='B2'>B2</li>
+    </ul>
   );
 }
 let element = <FunctionComponent />;

@@ -17,12 +17,14 @@ const RESERVED_PROPS = {
  * @param {*} type
  * @param {*} config
  */
-export function jsxDEV(type, config) {
+export function jsxDEV(type, config, maybeKey) {
   const props = {}; // 属性对象
   let key = null; // 用于区分父节点下的不同子节点的标识
   let ref = null; // 引入，可以通过ref获取真实DOM
-  if (hasValidKey(config)) {
-    key = config.key;
+  // React17以前转换函数中的key是放在config里的，第三个参数放child
+  // React17之后转换函数中的key是放在第三个参数里的，child放在config里
+  if(typeof maybeKey !== 'undefined') {
+    key = maybeKey;
   }
   if (hasValidRef(config)) {
     ref = config.ref;
@@ -51,15 +53,6 @@ function ReactElement(type, key, ref, props) {
     ref,
     props,
   };
-}
-
-/**
- * 验证key是否合法
- * @param {*} config
- * @returns {boolean}
- */
-function hasValidKey(config) {
-  return config.key !== undefined;
 }
 
 /**
