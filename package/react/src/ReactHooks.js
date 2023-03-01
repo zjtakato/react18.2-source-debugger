@@ -10,6 +10,12 @@ export function useReducer(reducer, initialArg) {
   return dispatcher.useReducer(reducer, initialArg);
 }
 
+export function useState(reducer, initialArg) {
+  const dispatcher = resolveDispatcher();
+  return dispatcher.useState(reducer, initialArg);
+}
+
 function resolveDispatcher() {
   return ReactCurrentDispatcher.current;
 }
+

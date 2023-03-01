@@ -46,7 +46,7 @@ export function extractEvents(
       listeners, // 监听函数数组
     });
   }
-  console.log(eventSystemFlags, listeners);
+  // console.log(eventSystemFlags, listeners);
 }
 
 export { registerSimpleEvents as registerEvents };

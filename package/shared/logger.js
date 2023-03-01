@@ -12,6 +12,6 @@ export default function (prefix, workInProgress) {
   } else if (tagName === 'HostText') {
     str += ` ${workInProgress.pendingProps} `;
   }
-  console.log(`${prefix} ${str}`);
+  // console.log(`${prefix} ${str}`);
   return str;
 }

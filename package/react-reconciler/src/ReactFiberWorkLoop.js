@@ -14,6 +14,7 @@ let workInProgressRoot = null;
  * 计划更新root（调度任务的功能）
  */
 export function scheduleUpdateOnFiber(root) {
+  console.log('~~~~~ 重新调度更新 ~~~~~')
   ensureRootIsScheduled(root); // 确保调度执行root上的更新
 }
 
@@ -30,7 +31,7 @@ function ensureRootIsScheduled(root) {
 function performConcurrentWorkOnRoot(root) {
   renderRootSync(root); // 以同步的方式渲染根节点，初次渲染的时候，都是同步的
   // 开始进入提交阶段，就是执行副作用，修改真实DOM
-  console.log('root', root);
+  // console.log('root', root);
   const finishedWork = root.current.alternate;
   root.finishedWork = finishedWork;
   commitRoot(root);
@@ -114,9 +115,9 @@ function printFinishedWork(fiber) {
     printFinishedWork(child);
     child = child.sibling;
   }
-  if (fiber.flags !== 0) {
-    console.log(getFlags(fiber.flags), getTag(fiber.tag), fiber.type, fiber.memoizedProps);
-  }
+  // if (fiber.flags !== 0) {
+  //   console.log(getFlags(fiber.flags), getTag(fiber.tag), fiber.type, fiber.memoizedProps);
+  // }
 }
 
 function getTag(tag) {
