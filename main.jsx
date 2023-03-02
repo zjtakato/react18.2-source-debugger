@@ -11,14 +11,16 @@ function FunctionComponent() {
   const [num1, setNum] = useState(0);
   return num1 === 0 ? (
     <ul key='container' onClick={() => setNum(num1 + 1)}>
-      <li key='A' id='A'>A</li>
-      <li key='B' id='B'>B</li>
-      <li key='C' id='C'>C</li>
+      <li key='A'>A</li>
+      <li key='B'>B</li>
+      <li key='C'>C</li>
     </ul>
   ) : (
     <ul key='container' onClick={() => setNum(num1 + 1)}>
-      <li key='B' id='B2'>B2</li>
-    </ul>
+    <li key='A'>A</li>
+    <p key='B'>B</p>
+    {/* <li key='C'>C</li> */}
+  </ul>
   );
 }
 let element = <FunctionComponent />;

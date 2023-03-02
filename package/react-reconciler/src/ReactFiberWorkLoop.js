@@ -142,6 +142,9 @@ function getTag(tag) {
 
 function getFlags(fiber) {
   const { flags, deletions } = fiber;
+  if (flags === (Placement | Update)) {
+    return '移动';
+  }
   if (flags === Placement) {
     return '插入';
   }
