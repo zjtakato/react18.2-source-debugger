@@ -2,13 +2,20 @@ import { scheduleCallBack } from 'scheduler';
 import { createWorkInProgress } from './ReactFiber';
 import { beginWork } from './ReactFiberBeginWork';
 import { completeWork } from './ReactFiberCompleteWork';
-import { ChildDeletion, MutationMask, NoFlags, Placement, Update } from './ReactFiberFlags';
-import { commitMutationEffectsOnFiber } from './ReactFiberCommitWork';
+import { ChildDeletion, MutationMask, NoFlags, Passive, Placement, Update } from './ReactFiberFlags';
+import {
+  commitMutationEffectsOnFiber, // 执行DOM操作
+  commitPassiveUnmountEffects, // 执行destory
+  commitPassiveMountEffects, // 执行create
+  commitLayoutEffects,
+} from './ReactFiberCommitWork';
 import { FunctionComponent, HostComponent, HostRoot, HostText } from './ReactWorkTags';
 import { finishQueueConcurrentUpdates } from './ReactFiberConcurrentUpdates';
 
 let workInProgress = null; // 记录当前工作
 let workInProgressRoot = null;
+let rootDoesHavePassiveEffect = false; // 此根节点上有没有useEffect类似的副作用
+let rootWithPendingPassiveEffects = null; // 具有useEffect副作用的根节点 fiberRootNode,根fiber.stateNode
 
 /**
  * 计划更新root（调度任务的功能）
@@ -92,17 +99,40 @@ function completeUnitOfWork(unitOfWork) {
 }
 
 function commitRoot(root) {
+  // 先获取新构建好的fiber树的根节点 tag = 3
   const { finishedWork } = root;
-  printFinishedWork(finishedWork);
+  if ((finishedWork.subtreeFlags & Passive) !== NoFlags || (finishedWork.flags & Passive) !== NoFlags) {
+    if (!rootDoesHavePassiveEffect) {
+      rootDoesHavePassiveEffect = true;
+      scheduleCallBack(flushPassiveEffect);
+    }
+  }
+  // printFinishedWork(finishedWork);
   // 判断子树有没有副作用
   const subtreeHasEffects = (finishedWork.subtreeFlags & MutationMask) !== NoFlags;
   const rootHasEffects = (finishedWork.flags & MutationMask) !== NoFlags;
   // 如果自己有副作用或者子节点有副作用，就提交DOM操作
   if (subtreeHasEffects || rootHasEffects) {
+    // DOM执行变更之后
     commitMutationEffectsOnFiber(finishedWork, root); // 在fiber上提交变更操作的副作用
+    commitLayoutEffects(finishedWork, root); // 执行layout effect
+    if (rootDoesHavePassiveEffect) {
+      rootDoesHavePassiveEffect = false;
+      rootWithPendingPassiveEffects = root;
+    }
   }
   // 等DOM变更后，就可以把root的current指向新的fiber树
   root.current = finishedWork;
+}
+
+function flushPassiveEffect() {
+  if (rootWithPendingPassiveEffects !== null) {
+    const root = rootWithPendingPassiveEffects;
+    // 执行卸载副作用，destory
+    commitPassiveUnmountEffects(root, root.current);
+    // 执行挂载副作用，create
+    commitPassiveMountEffects(root, root.current);
+  }
 }
 
 /**

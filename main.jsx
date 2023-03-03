@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { useReducer, useState } from 'react';
+import { useEffect, useLayoutEffect, useReducer, useState } from 'react';
 
 function counter(state, action) {
   if (action.type === 'add') return state + action.payload;
@@ -7,21 +7,26 @@ function counter(state, action) {
 }
 
 function FunctionComponent() {
-  console.log('~~~~FunctionComponent render~~~~~~');
-  const [num1, setNum] = useState(0);
-  return num1 === 0 ? (
-    <ul key='container' onClick={() => setNum(num1 + 1)}>
-      <li key='A'>A</li>
-      <li key='B'>B</li>
-      <li key='C'>C</li>
-    </ul>
-  ) : (
-    <ul key='container' onClick={() => setNum(num1 + 1)}>
-    <li key='A'>A</li>
-    <p key='B'>B</p>
-    {/* <li key='C'>C</li> */}
-  </ul>
-  );
+  const [number, setNumer] = useState(0);
+  useEffect(() => {
+    console.log('useEffect1');
+    return () => {
+      console.log('useEffect1 destory');
+    };
+  }, []);
+  useLayoutEffect(() => {
+    console.log('useLayoutEffect2');
+    return () => {
+      console.log('useLayoutEffect2 destory');
+    };
+  });
+  useEffect(() => {
+    console.log('useEffect3');
+    return () => {
+      console.log('useEffect3 destory');
+    };
+  });
+  return <button onClick={() => setNumer(number + 1)}>{number}</button>;
 }
 let element = <FunctionComponent />;
 const root = createRoot(document.getElementById('root'));
